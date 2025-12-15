@@ -1,70 +1,150 @@
-# Getting Started with Create React App
+# Uppy Image Uploader
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A production-ready image uploader built with React and Uppy's headless API, featuring custom UI, Cloudinary integration, and Pinterest-style masonry layout.
+
+## Features
+
+- 🎨 **Custom UI** - Built from scratch using Uppy headless mode (no pre-built components)
+- ☁️ **Cloudinary Integration** - Direct browser-to-cloud uploads
+- 📱 **Responsive Design** - Works seamlessly on mobile and desktop
+- 🖼️ **Masonry Layout** - Pinterest-style image grid with preserved aspect ratios
+- 📊 **Progress Tracking** - Per-file and overall upload progress
+- ✅ **File Validation** - Image types only, 10MB max file size
+- 🎯 **Drag & Drop** - Custom drag-and-drop with visual feedback
+- 🔄 **Retry Failed** - Automatic retry for failed uploads
+- 🎭 **Multiple UI States** - Empty, uploading, success, error states
+
+## Tech Stack
+
+- **React 19.2.3** - UI framework
+- **Uppy 5.2.0** - File upload engine (headless mode)
+- **Tailwind CSS 4.1.18** - Styling
+- **Cloudinary** - Cloud storage
+- **CSS Grid** - Masonry layout
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 16+ and npm
+- Cloudinary account (free tier available)
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env
+```
+
+### Cloudinary Setup
+
+1. Create account at [cloudinary.com](https://cloudinary.com)
+2. Get your cloud name from Dashboard
+3. Create unsigned upload preset (Settings → Upload)
+4. Add credentials to `.env`:
+
+```env
+REACT_APP_CLOUDINARY_CLOUD_NAME=your_cloud_name
+REACT_APP_CLOUDINARY_UPLOAD_PRESET=your_preset
+```
+
+### Run Development Server
+
+```bash
+npm start
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── DropZone/          # Drag-and-drop area
+│   ├── FileQueue/         # File list and cards
+│   ├── ProgressBar/       # Progress indicators
+│   ├── ActionButtons/     # Control buttons
+│   └── ErrorBoundary/     # Error handling
+├── hooks/
+│   ├── useUppy.js         # Uppy instance management
+│   └── useFileProgress.js # Progress tracking
+├── utils/
+│   ├── cloudinaryConfig.js # Cloudinary setup
+│   ├── fileValidation.js   # Validation logic
+│   └── formatBytes.js      # File size formatting
+├── App.js                  # Main component
+└── index.js               # Entry point
+```
+
+## Key Features
+
+### Uppy Headless Mode
+
+Uses Uppy's core API without any pre-built UI components:
+
+- `@uppy/core` - File handling and state management
+- `@uppy/xhr-upload` - XHR uploads to Cloudinary
+- `@uppy/thumbnail-generator` - Client-side image previews
+
+### Custom UI Components
+
+All UI built from scratch:
+
+- **DropZone** - Drag-and-drop with click-to-browse
+- **FileCard** - Thumbnail, file info, status indicators
+- **ProgressBar** - Per-file and aggregate progress
+- **ActionButtons** - Upload, cancel, retry, clear
+
+### File Validation
+
+- Accepted: JPG, JPEG, PNG, GIF, WEBP
+- Max size: 10MB per file
+- User-friendly error messages
+
+### Performance Optimizations
+
+- Memory cleanup for removed files
+- Concurrent upload limits
+- Lazy loading of thumbnails
+- Responsive layout with smooth transitions
 
 ## Available Scripts
 
-In the project directory, you can run:
+```bash
+npm start      # Development server
+npm run build  # Production build
+npm test       # Run tests
+npm run eject  # Eject from CRA (⚠️ irreversible)
+```
 
-### `npm start`
+## Browser Support
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+- Mobile browsers
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## License
 
-### `npm test`
+MIT
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Author
 
-### `npm run build`
+Built as a technical assignment demonstrating React and Uppy expertise.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+For detailed implementation plan, see [PLAN.md](PLAN.md)
+For setup instructions, see [SETUP.md](SETUP.md)
+For task tracking, see [TODO.md](TODO.md)
