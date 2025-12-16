@@ -53,10 +53,51 @@ const FileCard = ({ file, onRemove, onRetry }) => {
     }
   };
 
+  // For successfully uploaded images, show full image in masonry grid
+  if (file.status === 'success' && file.uploadURL) {
+    return (
+      <div className="border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+        {/* Full uploaded image */}
+        <div className="relative group">
+          <img
+            src={file.uploadURL}
+            alt={file.name}
+            className="w-full h-auto object-cover"
+            loading="lazy"
+          />
+          {/* Hover overlay with actions */}
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
+              <a
+                href={file.uploadURL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+              >
+                View Full
+              </a>
+              <button
+                onClick={() => onRemove(file.id)}
+                className="px-3 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* Image info */}
+        <div className="p-3">
+          <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+          <p className="text-xs text-gray-500">{formatBytes(file.size)}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // For pending/uploading/error files, show compact list view
   return (
     <div className={`
       border rounded-lg p-4 bg-white shadow-sm transition-all duration-300
-      ${file.status === 'success' ? 'border-green-200 bg-green-50' : ''}
       ${file.status === 'error' ? 'border-red-200 bg-red-50' : ''}
       ${file.status === 'uploading' ? 'border-blue-200 bg-blue-50' : ''}
     `}>

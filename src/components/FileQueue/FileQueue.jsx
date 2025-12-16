@@ -20,6 +20,10 @@ const FileQueue = ({ files, onRemove, onRetry }) => {
     return acc;
   }, {});
 
+  // Separate files by status for better layout
+  const uploadedFiles = files.filter(f => f.status === 'success');
+  const processingFiles = files.filter(f => f.status === 'uploading' || f.status === 'pending' || f.status === 'error');
+
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between mb-4">
@@ -44,16 +48,39 @@ const FileQueue = ({ files, onRemove, onRetry }) => {
           )}
         </div>
       </div>
-      <div className="space-y-3">
-        {files.map((file) => (
-          <FileCard
-            key={file.id}
-            file={file}
-            onRemove={onRemove}
-            onRetry={onRetry}
-          />
-        ))}
-      </div>
+
+      {/* Processing/Error Files - List View */}
+      {processingFiles.length > 0 && (
+        <div className="space-y-3 mb-6">
+          {processingFiles.map((file) => (
+            <FileCard
+              key={file.id}
+              file={file}
+              onRemove={onRemove}
+              onRetry={onRetry}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Uploaded Files - Masonry Grid */}
+      {uploadedFiles.length > 0 && (
+        <div>
+          <h4 className="text-md font-semibold text-gray-800 mb-3">
+            Uploaded Images
+          </h4>
+          <div className="masonry-grid">
+            {uploadedFiles.map((file) => (
+              <FileCard
+                key={file.id}
+                file={file}
+                onRemove={onRemove}
+                onRetry={onRetry}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
