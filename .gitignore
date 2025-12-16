@@ -21,3 +21,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Documentation files (keep local only)
+ARCHITECTURE.md
+PLAN.md
+TODO.md
+SETUP.md

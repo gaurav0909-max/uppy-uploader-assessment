@@ -69,14 +69,12 @@ const useUppy = () => {
       getResponseData: (responseText) => {
         try {
           const response = JSON.parse(responseText);
-          console.log('✅ Cloudinary upload success:', response.secure_url);
           return {
             uploadURL: response.secure_url,
             url: response.secure_url,
             publicId: response.public_id,
           };
         } catch (error) {
-          console.error('Failed to parse Cloudinary response:', error);
           return { error: 'Failed to parse response' };
         }
       },
@@ -152,20 +150,9 @@ const useUppy = () => {
     });
 
     uppyInstance.on('upload-error', (file, error, response) => {
-      // Try to get the actual response from the XMLHttpRequest
       const xhr = response?.request;
       const actualResponse = xhr?.responseText;
 
-      console.error('Upload error details:', {
-        file: file.name,
-        error: error,
-        statusCode: xhr?.status,
-        responseText: actualResponse,
-        responseBody: response?.body,
-        fullResponse: response,
-      });
-
-      // Try to parse the error message
       let errorMessage = 'Upload failed';
       if (actualResponse) {
         try {
@@ -187,8 +174,8 @@ const useUppy = () => {
       );
     });
 
-    uppyInstance.on('complete', (result) => {
-      console.log('Upload complete:', result);
+    uppyInstance.on('complete', () => {
+      // Upload complete
     });
 
     setUppy(uppyInstance);
@@ -204,8 +191,8 @@ const useUppy = () => {
 
   const uploadAll = useCallback(() => {
     if (uppy) {
-      uppy.upload().catch((error) => {
-        console.error('Upload error:', error);
+      uppy.upload().catch(() => {
+        // Error handled by upload-error event
       });
     }
   }, [uppy]);

@@ -54,7 +54,7 @@ const DropZone = ({ uppy, disabled = false }) => {
             source: 'Local',
           });
         } catch (error) {
-          console.error('Error adding file:', error);
+          // Error handled by Uppy's info system
         }
       });
     }
@@ -80,7 +80,7 @@ const DropZone = ({ uppy, disabled = false }) => {
             source: 'Local',
           });
         } catch (error) {
-          console.error('Error adding file:', error);
+          // Error handled by Uppy's info system
         }
       });
     }
