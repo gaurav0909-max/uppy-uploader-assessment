@@ -142,9 +142,3 @@ MIT
 ## Author
 
 Built as a technical assignment demonstrating React and Uppy expertise.
-
----
-
-For detailed implementation plan, see [PLAN.md](PLAN.md)
-For setup instructions, see [SETUP.md](SETUP.md)
-For task tracking, see [TODO.md](TODO.md)
