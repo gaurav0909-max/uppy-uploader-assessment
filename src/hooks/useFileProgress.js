@@ -27,10 +27,61 @@ const useFileProgress = (files = []) => {
   const [timeRemaining, setTimeRemaining] = useState('--:--');
 
   useEffect(() => {
-    // TODO: Calculate progress from files array
-    // TODO: Update overall progress
-    // TODO: Track completed and failed files
-    // TODO: Calculate upload speed and time remaining
+    if (!files || files.length === 0) {
+      setProgress({});
+      setOverallProgress(0);
+      setCompletedFiles(0);
+      setFailedFiles(0);
+      setUploadSpeed('0 KB/s');
+      setTimeRemaining('--:--');
+      return;
+    }
+
+    // Calculate per-file progress
+    const progressMap = {};
+    let totalProgress = 0;
+    let completed = 0;
+    let failed = 0;
+
+    files.forEach((file) => {
+      progressMap[file.id] = file.progress || 0;
+      totalProgress += file.progress || 0;
+
+      if (file.status === 'success') {
+        completed++;
+      } else if (file.status === 'error') {
+        failed++;
+      }
+    });
+
+    setProgress(progressMap);
+    setCompletedFiles(completed);
+    setFailedFiles(failed);
+
+    // Calculate overall progress
+    const overall = files.length > 0 ? Math.round(totalProgress / files.length) : 0;
+    setOverallProgress(overall);
+
+    // Calculate upload speed and time remaining (simplified)
+    // In a real implementation, you would track bytes uploaded over time
+    const uploadingFiles = files.filter((f) => f.status === 'uploading');
+    if (uploadingFiles.length > 0) {
+      // Simplified calculation - in production, track actual bytes/time
+      const avgProgress = uploadingFiles.reduce((sum, f) => sum + (f.progress || 0), 0) / uploadingFiles.length;
+
+      // Estimate remaining time based on average progress
+      if (avgProgress > 0 && avgProgress < 100) {
+        const estimatedSeconds = Math.round((100 - avgProgress) * 2); // Rough estimate
+        const mins = Math.floor(estimatedSeconds / 60);
+        const secs = estimatedSeconds % 60;
+        setTimeRemaining(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
+      } else {
+        setTimeRemaining('--:--');
+      }
+    } else {
+      setTimeRemaining('--:--');
+      setUploadSpeed('0 KB/s');
+    }
   }, [files]);
 
   return {
