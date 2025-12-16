@@ -14,9 +14,36 @@ const FileQueue = ({ files, onRemove, onRetry }) => {
     return null;
   }
 
+  // Calculate status counts
+  const statusCounts = files.reduce((acc, file) => {
+    acc[file.status] = (acc[file.status] || 0) + 1;
+    return acc;
+  }, {});
+
   return (
     <div className="mt-6">
-      <h3 className="text-lg font-semibold mb-4">Files ({files.length})</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">
+          Files ({files.length})
+        </h3>
+        <div className="flex space-x-3 text-sm">
+          {statusCounts.success > 0 && (
+            <span className="text-green-600 font-medium">
+              ✓ {statusCounts.success} uploaded
+            </span>
+          )}
+          {statusCounts.uploading > 0 && (
+            <span className="text-blue-600 font-medium">
+              ↻ {statusCounts.uploading} uploading
+            </span>
+          )}
+          {statusCounts.error > 0 && (
+            <span className="text-red-600 font-medium">
+              ✗ {statusCounts.error} failed
+            </span>
+          )}
+        </div>
+      </div>
       <div className="space-y-3">
         {files.map((file) => (
           <FileCard
