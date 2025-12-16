@@ -41,6 +41,10 @@ const useUppy = () => {
         minNumberOfFiles: 1,
         allowedFileTypes: ['image/*'],
       },
+      meta: {
+        upload_preset: cloudinaryConfig.uploadPreset,
+        folder: cloudinaryConfig.folder,
+      },
       onBeforeFileAdded: (currentFile) => {
         // Validate file before adding
         const validation = validateFile(currentFile.data);
@@ -58,18 +62,21 @@ const useUppy = () => {
       method: 'POST',
       formData: true,
       fieldName: 'file',
-      headers: {},
+      // Send upload_preset and folder as form fields
+      allowedMetaFields: ['upload_preset', 'folder'],
       limit: 3, // Concurrent uploads
       timeout: 120000, // 2 minutes
       getResponseData: (responseText) => {
         try {
           const response = JSON.parse(responseText);
+          console.log('✅ Cloudinary upload success:', response.secure_url);
           return {
             uploadURL: response.secure_url,
             url: response.secure_url,
             publicId: response.public_id,
           };
         } catch (error) {
+          console.error('Failed to parse Cloudinary response:', error);
           return { error: 'Failed to parse response' };
         }
       },
@@ -86,12 +93,6 @@ const useUppy = () => {
 
     // Subscribe to Uppy events
     uppyInstance.on('file-added', (file) => {
-      // Add upload preset and folder to file meta
-      uppyInstance.setFileMeta(file.id, {
-        upload_preset: cloudinaryConfig.uploadPreset,
-        folder: cloudinaryConfig.folder,
-      });
-
       setFiles((prevFiles) => [
         ...prevFiles,
         {
@@ -150,11 +151,37 @@ const useUppy = () => {
       );
     });
 
-    uppyInstance.on('upload-error', (file, error) => {
+    uppyInstance.on('upload-error', (file, error, response) => {
+      // Try to get the actual response from the XMLHttpRequest
+      const xhr = response?.request;
+      const actualResponse = xhr?.responseText;
+
+      console.error('Upload error details:', {
+        file: file.name,
+        error: error,
+        statusCode: xhr?.status,
+        responseText: actualResponse,
+        responseBody: response?.body,
+        fullResponse: response,
+      });
+
+      // Try to parse the error message
+      let errorMessage = 'Upload failed';
+      if (actualResponse) {
+        try {
+          const parsed = JSON.parse(actualResponse);
+          errorMessage = parsed?.error?.message || errorMessage;
+        } catch (e) {
+          errorMessage = actualResponse || errorMessage;
+        }
+      } else {
+        errorMessage = response?.body?.error?.message || error.message || errorMessage;
+      }
+
       setFiles((prevFiles) =>
         prevFiles.map((f) =>
           f.id === file.id
-            ? { ...f, status: 'error', error: error.message || 'Upload failed' }
+            ? { ...f, status: 'error', error: errorMessage }
             : f
         )
       );
@@ -168,7 +195,10 @@ const useUppy = () => {
 
     // Cleanup on unmount
     return () => {
-      uppyInstance.close({ reason: 'unmount' });
+      if (uppyInstance) {
+        uppyInstance.cancelAll();
+        uppyInstance.clear();
+      }
     };
   }, []);
 
