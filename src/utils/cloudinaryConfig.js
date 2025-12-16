@@ -1,17 +1,4 @@
-/**
- * Retrieves Cloudinary configuration from environment variables
- *
- * @returns {Object} Cloudinary configuration object
- * @returns {string} return.cloudName - Cloudinary cloud name
- * @returns {string} return.uploadPreset - Upload preset name
- * @returns {string} return.folder - Optional folder for uploads
- * @returns {string} return.uploadUrl - Complete Cloudinary upload URL
- * @throws {Error} If required environment variables are missing
- *
- * @example
- * const config = getCloudinaryConfig();
- * console.log(config.uploadUrl);
- */
+// Get Cloudinary config from environment variables
 export const getCloudinaryConfig = () => {
   const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
