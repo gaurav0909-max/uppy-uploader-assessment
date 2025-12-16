@@ -1,4 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Uppy from '@uppy/core';
+import XHRUpload from '@uppy/xhr-upload';
+import ThumbnailGenerator from '@uppy/thumbnail-generator';
+import { getCloudinaryConfig } from '../utils/cloudinaryConfig';
+import { validateFile } from '../utils/fileValidation';
 
 /**
  * Custom hook to manage Uppy instance and file uploads
@@ -22,35 +27,193 @@ const useUppy = () => {
   const [files, setFiles] = useState([]);
 
   useEffect(() => {
-    // TODO: Initialize Uppy with plugins
-    // TODO: Configure XHRUpload for Cloudinary
-    // TODO: Add ThumbnailGenerator plugin
-    // TODO: Subscribe to Uppy events
+    // Get Cloudinary configuration
+    const cloudinaryConfig = getCloudinaryConfig();
 
+    // Initialize Uppy with restrictions
+    const uppyInstance = new Uppy({
+      id: 'uppy',
+      autoProceed: false,
+      allowMultipleUploadBatches: true,
+      restrictions: {
+        maxFileSize: 10 * 1024 * 1024, // 10MB
+        maxNumberOfFiles: 10,
+        minNumberOfFiles: 1,
+        allowedFileTypes: ['image/*'],
+      },
+      onBeforeFileAdded: (currentFile) => {
+        // Validate file before adding
+        const validation = validateFile(currentFile.data);
+        if (!validation.isValid) {
+          uppyInstance.info(validation.error, 'error', 5000);
+          return false;
+        }
+        return true;
+      },
+    });
+
+    // Configure XHRUpload for Cloudinary
+    uppyInstance.use(XHRUpload, {
+      endpoint: cloudinaryConfig.uploadUrl,
+      method: 'POST',
+      formData: true,
+      fieldName: 'file',
+      headers: {},
+      limit: 3, // Concurrent uploads
+      timeout: 120000, // 2 minutes
+      getResponseData: (responseText) => {
+        try {
+          const response = JSON.parse(responseText);
+          return {
+            uploadURL: response.secure_url,
+            url: response.secure_url,
+            publicId: response.public_id,
+          };
+        } catch (error) {
+          return { error: 'Failed to parse response' };
+        }
+      },
+    });
+
+    // Add ThumbnailGenerator plugin
+    uppyInstance.use(ThumbnailGenerator, {
+      id: 'ThumbnailGenerator',
+      thumbnailWidth: 200,
+      thumbnailHeight: 200,
+      thumbnailType: 'image/jpeg',
+      waitForThumbnailsBeforeUpload: false,
+    });
+
+    // Subscribe to Uppy events
+    uppyInstance.on('file-added', (file) => {
+      // Add upload preset and folder to file meta
+      uppyInstance.setFileMeta(file.id, {
+        upload_preset: cloudinaryConfig.uploadPreset,
+        folder: cloudinaryConfig.folder,
+      });
+
+      setFiles((prevFiles) => [
+        ...prevFiles,
+        {
+          id: file.id,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          status: 'pending',
+          progress: 0,
+          thumbnail: null,
+          uploadURL: null,
+          error: null,
+        },
+      ]);
+    });
+
+    uppyInstance.on('file-removed', (file) => {
+      setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
+    });
+
+    uppyInstance.on('thumbnail:generated', (file, preview) => {
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.id === file.id ? { ...f, thumbnail: preview } : f
+        )
+      );
+    });
+
+    uppyInstance.on('upload-start', () => {
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.status === 'pending' ? { ...f, status: 'uploading' } : f
+        )
+      );
+    });
+
+    uppyInstance.on('upload-progress', (file, progress) => {
+      const percentage = Math.round((progress.bytesUploaded / progress.bytesTotal) * 100);
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.id === file.id
+            ? { ...f, progress: percentage, status: 'uploading' }
+            : f
+        )
+      );
+    });
+
+    uppyInstance.on('upload-success', (file, response) => {
+      const uploadURL = response.body?.secure_url || response.uploadURL;
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.id === file.id
+            ? { ...f, status: 'success', progress: 100, uploadURL }
+            : f
+        )
+      );
+    });
+
+    uppyInstance.on('upload-error', (file, error) => {
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.id === file.id
+            ? { ...f, status: 'error', error: error.message || 'Upload failed' }
+            : f
+        )
+      );
+    });
+
+    uppyInstance.on('complete', (result) => {
+      console.log('Upload complete:', result);
+    });
+
+    setUppy(uppyInstance);
+
+    // Cleanup on unmount
     return () => {
-      // TODO: Cleanup Uppy instance
+      uppyInstance.close({ reason: 'unmount' });
     };
   }, []);
 
-  const uploadAll = () => {
-    // TODO: Implement upload all functionality
-    console.log('Upload all triggered');
-  };
+  const uploadAll = useCallback(() => {
+    if (uppy) {
+      uppy.upload().catch((error) => {
+        console.error('Upload error:', error);
+      });
+    }
+  }, [uppy]);
 
-  const cancelAll = () => {
-    // TODO: Implement cancel all functionality
-    console.log('Cancel all triggered');
-  };
+  const cancelAll = useCallback(() => {
+    if (uppy) {
+      uppy.cancelAll();
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.status === 'uploading' ? { ...f, status: 'pending', progress: 0 } : f
+        )
+      );
+    }
+  }, [uppy]);
 
-  const retryAll = () => {
-    // TODO: Implement retry all functionality
-    console.log('Retry all triggered');
-  };
+  const retryAll = useCallback(() => {
+    if (uppy) {
+      const failedFiles = files.filter((f) => f.status === 'error');
+      failedFiles.forEach((file) => {
+        uppy.retryUpload(file.id);
+      });
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.status === 'error' ? { ...f, status: 'pending', error: null } : f
+        )
+      );
+    }
+  }, [uppy, files]);
 
-  const clearCompleted = () => {
-    // TODO: Implement clear completed functionality
-    console.log('Clear completed triggered');
-  };
+  const clearCompleted = useCallback(() => {
+    if (uppy) {
+      const completedFiles = files.filter((f) => f.status === 'success');
+      completedFiles.forEach((file) => {
+        uppy.removeFile(file.id);
+      });
+      setFiles((prevFiles) => prevFiles.filter((f) => f.status !== 'success'));
+    }
+  }, [uppy, files]);
 
   return {
     uppy,
